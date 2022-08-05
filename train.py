@@ -8,6 +8,7 @@ The file contains implementations of the functions used to train a CNN model.
 
 
 # Built-in/Generic Imports
+import os
 import time
 from argparse import Namespace
 
@@ -34,11 +35,12 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def train_cnn(arguments: Namespace, device: torch.device) -> None:
+def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False) -> None:
     """
     Function for training the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
     :param device: PyTorch device that will be used for training.
+    :param load_model: Boolean if another trained model should be loaded for fine tuning.
     """
 
     # Loads the training and validation data.
@@ -58,6 +60,10 @@ def train_cnn(arguments: Namespace, device: torch.device) -> None:
 
     # Initialises the classifier model.
     classifier = Classifier(arguments.efficient_net, train_data.num_classes)
+
+    # Loads a pretrained model if specified.
+    if load_model:
+        classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.load_model}_best.pt")))
 
     # Sets the classifier to training mode.
     classifier.train()

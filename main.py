@@ -9,11 +9,13 @@ Can be adjusted using either the configuration file or command line arguments.
 
 
 # Own Modules Imports
-from utils import *
-from config import *
+from train import train_cnn
+from test import test_cnn, test_bnn
+from utils import log, set_random_seed, get_device
+from config import load_configurations, print_arguments
 
 
-__author__ = ["Jacob Carse", "Tamás Süveges"]
+__author__    = ["Jacob Carse", "Tamás Süveges"]
 __copyright__ = "Copyright 2022, Dermatology"
 __credits__   = ["Jacob Carse", "Tamás Süveges"]
 __license__   = "MIT"

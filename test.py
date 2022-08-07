@@ -52,7 +52,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
 
     # Creates the testing data loader using the dataset objects.
     testing_data_loader = DataLoader(test_data, batch_size=arguments.batch_size * 2,
-                                     shuffle=False, num_workers=arguments.num_workers,
+                                     shuffle=False, num_workers=arguments.data_workers,
                                      pin_memory=False, drop_last=False)
 
     log(arguments, "Loaded Datasets\n")
@@ -60,7 +60,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=False,
+        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=False,
                                        num_classes=test_data.num_classes)
 
     else:
@@ -87,7 +87,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
 
             # Moves the images to the selected device also appends the labels to the array of labels.
             images = images.to(device)
-            labels = np.append(labels, labels.cpu().numpy())
+            labels = np.append(labels, [labels.cpu().numpy()])
 
             # Performs forward propagation using 16 bit precision.
             if arguments.precision == 16 and device != torch.device("cpu"):
@@ -99,7 +99,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
                 logits = classifier(images)
 
             # Gets the predictive probabilities and appends them to the array of predictions.
-            predictions = np.append(predictions, F.softmax(logits, dim=1).cpu().numpy())
+            predictions = np.append(predictions, [F.softmax(logits, dim=1).cpu().numpy()])
 
             # If the number of batches have been reached end testing.
             if batch_count == arguments.batches_per_epoch:
@@ -130,12 +130,12 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
 
     # Creates the training data loader using the dataset objects.
     training_data_loader = DataLoader(train_data, batch_size=arguments.batch_size,
-                                      shuffle=True, num_workers=arguments.num_workers,
+                                      shuffle=True, num_workers=arguments.data_workers,
                                       pin_memory=False, drop_last=False)
 
     # Creates the testing data loader using the dataset objects.
     testing_data_loader = DataLoader(test_data, batch_size=arguments.batch_size * 2,
-                                     shuffle=False, num_workers=arguments.num_workers,
+                                     shuffle=False, num_workers=arguments.data_workers,
                                      pin_memory=False, drop_last=False)
 
     log(arguments, "Loaded Datasets\n")
@@ -143,7 +143,7 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=False,
+        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=False,
                                        num_classes=test_data.num_classes)
 
     else:

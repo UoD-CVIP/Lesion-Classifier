@@ -49,12 +49,12 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
 
     # Creates the training data loader using the dataset object.
     training_data_loader = DataLoader(train_data, batch_size=arguments.batch_size,
-                                      shuffle=True, num_workers=arguments.num_workers,
+                                      shuffle=True, num_workers=arguments.data_workers,
                                       pin_memory=False, drop_last=False)
 
     # Creates the validation data loader using the dataset object
     validation_data_loader = DataLoader(val_data, batch_size=arguments.batch_size * 2,
-                                        shuffle=False, num_workers=arguments.num_workers,
+                                        shuffle=False, num_workers=arguments.data_workers,
                                         pin_memory=False, drop_last=False)
 
     log(arguments, "Loaded Datasets\n")
@@ -62,7 +62,7 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=True,
+        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=True,
                                        num_classes=train_data.num_classes)
 
     else:
@@ -216,8 +216,14 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
         if val_loss / val_batches < best_loss:
             best_loss = val_loss / val_batches
             best_epoch = epoch
-            classifier.save_model(arguments.model_dir, arguments.experiment)
+
+            # Checks if the save directory exists and if not creates it.
+            os.makedirs(arguments.model_dir, exist_ok=True)
+
+            # Saves the model to the save directory.
+            torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt"))
 
     # Logs the final training information.
     log(arguments,
-        f"\nTraining Finished with best loss of {best_loss} at epoch {best_epoch} in {int(time.time() - start_time)}s.")
+        f"\nTraining Finished with best loss of {round(best_loss, 4)} at epoch {best_epoch} in "
+        f"{int(time.time() - start_time)}s.")

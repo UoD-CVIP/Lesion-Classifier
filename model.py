@@ -7,9 +7,6 @@ The file for the definition of classifier model.
 """
 
 
-# Built-in/Generic Imports
-import os
-
 # Library Imports
 import torch
 import torch.nn as nn
@@ -32,7 +29,6 @@ class Classifier(nn.Module):
     Class for the Classifier model that uses an EfficientNet encoder.
         init - Initialiser for the model.
         forward - Performs forward propagation.
-        save_model - Saves the model.
     """
 
     def __init__(self, b: int = 0, class_num: int = 2, pretrained: bool = True) -> None:
@@ -78,16 +74,3 @@ class Classifier(nn.Module):
 
         # Gets the output logits from the output layer.
         return self.classifier(x)
-
-    def save_model(self, path: str, name: str) -> None:
-        """
-        Method for saving the model.
-        :param path: Directory path to save the model.
-        :param name: The name of the experiment to be saved.
-        """
-
-        # Checks if the save directory exists and if not creates it.
-        os.makedirs(path, exist_ok=True)
-
-        # Saves the model to the save directory.
-        torch.save(self.state_dict(), os.path.join(path, f"{name}_best.pt"))

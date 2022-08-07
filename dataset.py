@@ -103,7 +103,7 @@ class Dataset(data.Dataset):
         self.image_transforms = transforms.Compose([
             transforms.Resize((arguments.image_x, arguments.image_y), transforms.InterpolationMode.LANCZOS),
             transforms.ToTensor(),
-            transforms.ToTensor()
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
         ])
 
     def __len__(self) -> int:
@@ -125,10 +125,17 @@ class Dataset(data.Dataset):
         df_row = self.df.iloc[index]
         image = Image.open(df_row["image"])
 
-        # Augments the image.
+        # Augments the image if training.
         if self.mode == "train":
-            image = self.augmentation(image=image)
-        image = self.image_transforms(self.square_image(image))
+            image = self.augmentation(image=np.asarray(image))
+            image = Image.fromarray(image)
+
+        # Crops the image to a square image.
+        if image.width != image.height and self.arguments.image_x == self.arguments.image_y:
+            image = self.square_image(image)
+
+        # Resizes and normalises the image.
+        image = self.image_transforms(image)
 
         # Returns the image and label.
         return image, df_row["label"]
@@ -140,7 +147,7 @@ class Dataset(data.Dataset):
         :return: Integer for the number of classes.
         """
 
-        return 0 # TODO - FIX THIS TO RETURN NUMBER OF CLASSES
+        return 8
 
     def square_image(self, image: Image) -> Image:
         """
@@ -149,12 +156,12 @@ class Dataset(data.Dataset):
         :return: An Square Pillow Image.
         """
 
-        if image.width != image.height and self.arguments.square_image:
-            offset = int(abs(image.width - image.height) / 2)
-            if image.width > image.height:
-                return image.crop([offset, 0, image.width - offset, image.height])
-            else:
-                return image.crop([0, offset, image.width, image.height - offset])
+        offset = int(abs(image.width - image.height) / 2)
+        if image.width > image.height:
+            return image.crop([offset, 0, image.width - offset, image.height])
+        else:
+            return image.crop([0, offset, image.width, image.height - offset])
+
 
 def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
     """

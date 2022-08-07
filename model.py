@@ -7,9 +7,10 @@ The file for the definition of classifier model.
 """
 
 
-# Library Imports
+# Built-in/Generic Imports
 import os
 
+# Library Imports
 import torch
 import torch.nn as nn
 from torch.nn import functional as F

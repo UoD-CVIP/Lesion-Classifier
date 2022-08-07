@@ -13,6 +13,7 @@ import time
 from argparse import Namespace
 
 # Library Imports
+import timm
 import torch
 from torch.cuda import amp
 from torch.nn import functional as F
@@ -22,7 +23,7 @@ from torch.optim import SGD, lr_scheduler
 # Own Modules
 from utils import log
 from model import Classifier
-# from dataset import get_datasets
+from dataset import get_datasets
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -40,11 +41,11 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     Function for training the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
     :param device: PyTorch device that will be used for training.
-    :param load_model: Boolean if another trained model should be loaded for fine tuning.
+    :param load_model: Boolean if another trained model should be loaded for fine-tuning.
     """
 
     # Loads the training and validation data.
-    train_data, val_data, _ = (None, None, None) #get_datasets(arguments)
+    train_data, val_data, _ = get_datasets(arguments)
 
     # Creates the training data loader using the dataset object.
     training_data_loader = DataLoader(train_data, batch_size=arguments.batch_size,
@@ -59,7 +60,14 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     log(arguments, "Loaded Datasets\n")
 
     # Initialises the classifier model.
-    classifier = Classifier(arguments.efficient_net, train_data.num_classes)
+    if arguments.swin_model:
+        # Loads the SWIN Transformer model.
+        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=True,
+                                       num_classes=train_data.num_classes)
+
+    else:
+        # Loads the EfficientNet CNN model.
+        classifier = Classifier(arguments.efficient_net, train_data.num_classes)
 
     # Loads a pretrained model if specified.
     if load_model:

@@ -41,3 +41,27 @@ if __name__ == "__main__":
     # Sets the default device to be used.
     device = get_device(arguments)
     log(arguments, f"Device set to {device}\n")
+
+    # Trains a CNN model.
+    if arguments.task.lower() == "train":
+        train_cnn(arguments, device)
+
+    # Fine-tunes a CNN model.
+    elif arguments.task.lower() == "finetune":
+        train_cnn(arguments, device, load_model=True)
+
+    # Tests a CNN model.
+    elif arguments.task.lower() == "test":
+        test_cnn(arguments, device)
+        test_bnn(arguments, device)
+
+    # Trains a CNN model using k fold validation.
+    elif arguments.task.lower() == "train_cv":
+        pass
+
+    # Fine-tunes a CNN model using k fold validation.
+    elif arguments.task.lower() == "tune_cv":
+        pass
+
+    else:
+        log(arguments, "Enter a valid task. \"train\", \"finetune\", \"test\", \"train_cv\" or \"tune_cv\"")

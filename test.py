@@ -12,6 +12,7 @@ import os
 from argparse import Namespace
 
 # Library Imports
+import timm
 import torch
 import laplace
 import numpy as np
@@ -23,7 +24,7 @@ from torch.utils.data import DataLoader
 # Own Modules
 from utils import log
 from model import Classifier
-# from dataset import get_datasets, Dataset
+from dataset import get_datasets, Dataset
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -36,17 +37,17 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def test_cnn(arguments: Namespace, device: torch.device, test_data: None = None) -> None: # TODO: test_data is Dataset
+def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = None) -> None:
     """
     Function for testing the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for testing.
     :param device: PyTorch device that will be used for training.
-    :param test_data: Dataset object can be passed instead of loading default tesing data.
+    :param test_data: Dataset object can be passed instead of loading default testing data.
     """
 
     # Loads the testing data is no test data has been provided.
     if test_data is None:
-        _, _, test_data = (None, None, None) # get_datasets(arguments)
+        _, _, test_data = get_datasets(arguments)
 
     # Creates the testing data loader using the dataset objects.
     testing_data_loader = DataLoader(test_data, batch_size=arguments.batch_size * 2,
@@ -56,7 +57,14 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: None = None)
     log(arguments, "Loaded Datasets\n")
 
     # Initialises the classifier model.
-    classifier = Classifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
+    if arguments.swin_model:
+        # Loads the SWIN Transformer model.
+        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=False,
+                                       num_classes=test_data.num_classes)
+
+    else:
+        # Loads the EfficientNet CNN model.
+        classifier = Classifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
 
     # Loads the trained model.
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.load_model}_best.pt")))
@@ -106,8 +114,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: None = None)
     log(arguments, cm)
 
 
-# TODO: train_data and test_data is Dataset.
-def test_bnn(arguments: Namespace, device: torch.device, train_data: None = None, test_data: None = None) -> None:
+def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = None, test_data: Dataset = None) -> None:
     """
     Function for testing the Bayesian Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for testing.
@@ -117,8 +124,8 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: None = None
     """
 
     # Loads the testing data is no test data has been provided.
-    if test_data is None:
-        train_data, _, test_data = (None, None, None) # get_datasets(arguments)
+    if train_data is None or test_data is None:
+        train_data, _, test_data = get_datasets(arguments)
 
     # Creates the training data loader using the dataset objects.
     training_data_loader = DataLoader(train_data, batch_size=arguments.batch_size,
@@ -133,7 +140,14 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: None = None
     log(arguments, "Loaded Datasets\n")
 
     # Initialises the classifier model.
-    classifier = Classifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
+    if arguments.swin_model:
+        # Loads the SWIN Transformer model.
+        classifier = timm.create_model("swin_small_patch4_window7_224", pretrained=False,
+                                       num_classes=test_data.num_classes)
+
+    else:
+        # Loads the EfficientNet CNN model.
+        classifier = Classifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
 
     # Loads the trained model.
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.load_model}_best.pt")))

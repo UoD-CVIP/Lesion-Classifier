@@ -63,9 +63,6 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--seed", type=int,
                                  default=int(config_parser["standard"]["seed"]),
                                  help="Integer - Seed used to generate random numbers.")
-    argument_parser.add_argument("--output_dir", type=str,
-                                 default=config_parser["standard"]["output_dir"],
-                                 help="String - Directory path for where the outputs will be stored.")
 
     # Logging Arguments
     argument_parser.add_argument("--verbose", type=str_to_bool,
@@ -77,6 +74,73 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--log_interval", type=int,
                                  default=int(config_parser["logging"]["log_interval"]),
                                  help="Integer - .")
+
+    # Dataset Arguments
+    argument_parser.add_argument("--dataset", type=str,
+                                 default=config_parser["dataset"]["dataset"].lower(),
+                                 help="String - Dataset to be used.")
+    argument_parser.add_argument("--dataset_dir", type=str,
+                                 default=config_parser["dataset"]["dataset_dir"],
+                                 help="String - Directory path for where the dataset files are stored.")
+    argument_parser.add_argument("--image_x", type=int,
+                                 default=int(config_parser["dataset"]["image_x"]),
+                                 help="Integer - Width of the image that should be resized to.")
+    argument_parser.add_argument("--image_y", type=int,
+                                 default=int(config_parser["dataset"]["image_y"]),
+                                 help="Integer - Height of the image that should be resized to.")
+    argument_parser.add_argument("--val_split", type=float,
+                                 default=float(config_parser["dataset"]["val_split"]),
+                                 help="Float - Percentage of data to be used for validation.")
+    argument_parser.add_argument("--test_split", type=float,
+                                 default=float(config_parser["dataset"]["test_split"]),
+                                 help="Float - Percentage of data to be used for testing.")
+
+    # Performance Arguments
+    argument_parser.add_argument("--data_workers", type=int,
+                                 default=int(config_parser["performance"]["data_workers"]),
+                                 help="Integer - How many data workers should be used to load the data.")
+    argument_parser.add_argument("--use_gpu", type=str_to_bool,
+                                 default=config_parser["performance"]["use_gpu"].lower() == "true",
+                                 help="Boolean - Should training and testing use GPU acceleration.")
+    argument_parser.add_argument("--precision", type=int,
+                                 default=int(config_parser["performance"]["precision"]),
+                                 help="Integer - The level of precision used by the model.")
+
+    # Model Arguments
+    argument_parser.add_argument("--model_dir", type=str,
+                                 default=config_parser["model"]["model_dir"],
+                                 help="String - Directory path for where the Models are saved.")
+    argument_parser.add_argument("--load_model", type=str,
+                                 default=config_parser["model"]["load_model"],
+                                 help="String - The model to be loaded for testing or fine-tuning.")
+    argument_parser.add_argument("--efficient_net", type=int,
+                                 default=int(config_parser["model"]["efficient_net"]),
+                                 help="Integer - The compound coefficient of the efficient net encoder.")
+    argument_parser.add_argument("--swin_model", type=str_to_bool,
+                                 default=config_parser["model"]["swin_model"].lower() == "true",
+                                 help="Boolean - Should the SWIN model be used instead of EfficientNet.")
+
+    # Training Arguments
+    argument_parser.add_argument("--epochs", type=int,
+                                 default=int(config_parser["training"]["epochs"]),
+                                 help="Integer - The number of epochs to be run during training.")
+    argument_parser.add_argument("--batch_size", type=int,
+                                 default=int(config_parser["training"]["batch_size"]),
+                                 help="Integer - The size of the batches used during training (used 2 * for testing).")
+    argument_parser.add_argument("--minimum_lr", type=float,
+                                 default=float(config_parser["training"]["minimum_lr"]),
+                                 help="Float - Value for the minimum learning rate during training.")
+    argument_parser.add_argument("--maximum_lr", type=float,
+                                 default=float(config_parser["training"]["maximum_lr"]),
+                                 help="Float - Value for the maximum learning rate during training.")
+    argument_parser.add_argument("--k_folds", type=int,
+                                 default=int(config_parser["training"]["k_folds"]),
+                                 help="Integer - The number of k folds used for cross validation.")
+
+    # Bayesian Arguments
+    argument_parser.add_argument("--testing_samples", type=int,
+                                 default=int(config_parser["bayesian"]["testing_samples"]),
+                                 help="Integer - The number of samples taken during testing.")
 
     # Debug Arguments
     argument_parser.add_argument("--batches_per_epoch", type=int,

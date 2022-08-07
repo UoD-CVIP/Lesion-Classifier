@@ -4,6 +4,7 @@
 """
 The file contains implementations of the functions used to test a CNN model.
     test_cnn - Function used to test a Convolutional Neural Network.
+    test_bnn - Function used to test a Bayesian Convolutional Neural Network.
 """
 
 
@@ -208,7 +209,7 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
             predictive_outputs = np.mean(predictive_outputs, axis=1)
 
             # Gets the predictive probabilities and appends them to the array of predictions.
-            predictions = np.append(predictions, F.softmax(predictive_outputs, dim=1).cpu().numpy())
+            predictions = np.append(predictions, predictive_outputs)
 
             # If the number of batches have been reached end testing.
             if batch_count == arguments.batches_per_epoch:

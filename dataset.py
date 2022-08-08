@@ -147,7 +147,7 @@ class Dataset(data.Dataset):
         :return: Integer for the number of classes.
         """
 
-        return 8
+        return 7
 
     def square_image(self, image: Image) -> Image:
         """
@@ -178,9 +178,12 @@ def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
         # Gets the directory of the ISIC images.
         data_base = os.path.join(arguments.dataset_dir, "ISIC_2019_Training_Input")
 
+        # Removes vascular lesion samples.
+        df = df.drop(df[df.VASC == 1].index)
+
         # Gets the full filenames and labels of the ISIC data.
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
-        labels = np.argmax(df.drop(["image", "UNK"], 1).to_numpy(), axis=1)
+        labels = np.argmax(df.drop(["image", "VASC", "UNK"], 1).to_numpy(), axis=1)
 
         # Creates a DataFrame with the filenames and labels.
         df = pd.DataFrame([filenames, labels]).transpose()
@@ -205,9 +208,54 @@ def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
         val_df = df.take(val_indices)
         test_df = df.take(test_indices)
 
+    # Loads SD260 dataset.
+    elif arguments.dataset.lower() == "sd260":
+        # Reads the SD260 dataset csv file containing filenames and labels.
+        df = pd.read_csv(os.path.join(arguments.dataset_dir, "data.csv"))
+
+        # Gets the directory of the SD260 images.
+        data_base = os.path.join(arguments.dataset_dir, "data")
+
+        # Gets the full filenames and labels of the SD260 data.
+        filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
+        labels = np.argmax(df.drop(["image", "UNK"], 1).to_numpy(), axis=1)
+
+        # Creates a DataFrame with the filenames and labels.
+        df = pd.DataFrame([filenames, labels]).transpose()
+        df.columns = ["image", "label"]
+
+        # Gets the indices of all the data in the dataset.
+        indices = np.array(range(df.shape[0]))
+
+        # Shuffles the SD260 dataset.
+        random_generator = np.random.default_rng(arguments.seed)
+        random_generator.shuffle(indices)
+
+        # Split data indices into training, testing and validation sets.
+        split_point_1 = int(indices.shape[0] * arguments.test_split)
+        split_point_2 = int(indices.shape[0] * (arguments.val_split + arguments.test_split))
+        test_indices = indices[0:split_point_1]
+        val_indices = indices[split_point_1:split_point_2]
+        train_indices = indices[split_point_2::]
+
+        # Creates the DataFrames for each of the data splits.
+        train_df = df.take(train_indices)
+        val_df = df.take(val_indices)
+        test_df = df.take(test_indices)
+
+    # Loads NHS Tayside dataset.
+    elif arguments.dataset == "tayside":
+        # Gets the directory of the SD260 images.
+        data_base = os.path.join(arguments.dataset_dir, "data")
+
+    # Loads the NHS Forth Valley dataset.
+    elif arguments.dataset == "forth-valley":
+        # Gets the directory of the SD260 images.
+        data_base = os.path.join(arguments.dataset_dir, "data")
+
     # Exits script if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\" or ")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\", \"Tayside\" or \"Forth-Vally\"")
         quit()
 
     # Creates the training, validation and testing Dataset objects.

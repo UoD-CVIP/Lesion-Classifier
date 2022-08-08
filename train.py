@@ -44,6 +44,10 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     :param load_model: Boolean if another trained model should be loaded for fine-tuning.
     """
 
+    # Sets PyTorch to detect errors in Autograd, useful for debugging but slows down performance.
+    if arguments.detect_anomaly:
+        torch.autograd.set_detect_anomaly(True)
+
     # Loads the training and validation data.
     train_data, val_data, _ = get_datasets(arguments)
 
@@ -116,6 +120,9 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
                     # Calculates the cross entropy loss.
                     loss = F.cross_entropy(predictions, labels)
 
+                # Clips the gradient to the maximum value of a 16-bit float.
+                torch.nn.utils.clip_grad_norm_(classifier.parameters(), torch.finfo(torch.float16).max)
+
                 # Using the gradient scaler performs backward propagation.
                 scaler.scale(loss).backward()
 
@@ -132,6 +139,9 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
 
                 # Calculates the cross entropy loss.
                 loss = F.cross_entropy(predictions, labels)
+
+                # Clips the gradient to the maximum value of a 32-bit float.
+                torch.nn.utils.clip_grad_norm_(classifier.parameters(), torch.finfo().max)
 
                 # Performs backward propagation with the loss.
                 loss.backward()

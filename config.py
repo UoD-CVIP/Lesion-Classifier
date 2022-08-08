@@ -143,6 +143,9 @@ def load_configurations(description: str) -> Namespace:
                                  help="Integer - The number of samples taken during testing.")
 
     # Debug Arguments
+    argument_parser.add_argument("--detect_anomaly", type=str_to_bool,
+                                 default=config_parser["debug"]["detect_anomaly"].lower() == "true",
+                                 help="Boolean - Should Autograd anomaly detection be used.")
     argument_parser.add_argument("--batches_per_epoch", type=int,
                                  default=int(config_parser["debug"]["batches_per_epoch"]),
                                  help="Integer - The number of batches to be run per epoch.")

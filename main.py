@@ -10,6 +10,7 @@ Can be adjusted using either the configuration file or command line arguments.
 
 # Own Modules Imports
 from train import train_cnn
+from k_fold import k_fold_cross_validation
 from test import test_cnn, test_bnn
 from utils import log, set_random_seed, get_device
 from config import load_configurations, print_arguments
@@ -57,11 +58,11 @@ if __name__ == "__main__":
 
     # Trains a CNN model using k fold validation.
     elif arguments.task.lower() == "train_cv":
-        pass
+        k_fold_cross_validation(arguments, device)
 
     # Fine-tunes a CNN model using k fold validation.
     elif arguments.task.lower() == "tune_cv":
-        pass
+        k_fold_cross_validation(arguments, device, tune=True)
 
     else:
         log(arguments, "Enter a valid task. \"train\", \"finetune\", \"test\", \"train_cv\" or \"tune_cv\"")

@@ -23,7 +23,7 @@ from torch.optim import SGD, lr_scheduler
 # Own Modules
 from utils import log
 from model import Classifier
-from dataset import get_datasets
+from dataset import get_datasets, Dataset
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -36,12 +36,15 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False) -> None:
+def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False,
+              train_data: Dataset = None, val_data: Dataset = None) -> None:
     """
     Function for training the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
     :param device: PyTorch device that will be used for training.
     :param load_model: Boolean if another trained model should be loaded for fine-tuning.
+    :param train_data: Dataset object to be used to train the model.
+    :param val_data: Dataset object to be used to validation the model.
     """
 
     # Sets PyTorch to detect errors in Autograd, useful for debugging but slows down performance.
@@ -49,7 +52,8 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
         torch.autograd.set_detect_anomaly(True)
 
     # Loads the training and validation data.
-    train_data, val_data, _ = get_datasets(arguments)
+    if train_data is None or val_data is None:
+        train_data, val_data, _ = get_datasets(arguments)
 
     # Creates the training data loader using the dataset object.
     training_data_loader = DataLoader(train_data, batch_size=arguments.batch_size,

@@ -17,6 +17,7 @@ import torch
 import numpy as np
 import imgaug as ia
 import pandas as pd
+from pandas import DataFrame
 from torch.utils import data
 from PIL import Image, ImageFile
 from torchvision import transforms
@@ -163,11 +164,11 @@ class Dataset(data.Dataset):
             return image.crop([0, offset, image.width, image.height - offset])
 
 
-def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
+def get_dataframe(arguments: Namespace) -> DataFrame:
     """
-    Loads the selected dataset and creates Dataset object for training, validation and testing.
-    :param arguments: ArgumentParser Namespace containing arguments for data loading.
-    :return: Three Dataset objects for training, validation and testing.
+    Gets a DataFrame containing image names and labels of the selected dataset.
+    :param arguments: ArgumentParser Namespace containing arguments for dataset loading.
+    :return: Pandas DataFrame containing image names and labels.
     """
 
     # Loads ISIC dataset.
@@ -185,29 +186,6 @@ def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
         labels = np.argmax(df.drop(["image", "VASC", "UNK"], 1).to_numpy(), axis=1)
 
-        # Creates a DataFrame with the filenames and labels.
-        df = pd.DataFrame([filenames, labels]).transpose()
-        df.columns = ["image", "label"]
-
-        # Gets the indices of all the data in the dataset.
-        indices = np.array(range(df.shape[0]))
-
-        # Shuffles the ISIC dataset.
-        random_generator = np.random.default_rng(arguments.seed)
-        random_generator.shuffle(indices)
-
-        # Split data indices into training, testing and validation sets.
-        split_point_1 = int(indices.shape[0] * arguments.test_split)
-        split_point_2 = int(indices.shape[0] * (arguments.val_split + arguments.test_split))
-        test_indices = indices[0:split_point_1]
-        val_indices = indices[split_point_1:split_point_2]
-        train_indices = indices[split_point_2::]
-
-        # Creates the DataFrames for each of the data splits.
-        train_df = df.take(train_indices)
-        val_df = df.take(val_indices)
-        test_df = df.take(test_indices)
-
     # Loads SD260 dataset.
     elif arguments.dataset.lower() == "sd260":
         # Reads the SD260 dataset csv file containing filenames and labels.
@@ -219,29 +197,6 @@ def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
         # Gets the full filenames and labels of the SD260 data.
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
         labels = np.argmax(df.drop(["image", "UNK"], 1).to_numpy(), axis=1)
-
-        # Creates a DataFrame with the filenames and labels.
-        df = pd.DataFrame([filenames, labels]).transpose()
-        df.columns = ["image", "label"]
-
-        # Gets the indices of all the data in the dataset.
-        indices = np.array(range(df.shape[0]))
-
-        # Shuffles the SD260 dataset.
-        random_generator = np.random.default_rng(arguments.seed)
-        random_generator.shuffle(indices)
-
-        # Split data indices into training, testing and validation sets.
-        split_point_1 = int(indices.shape[0] * arguments.test_split)
-        split_point_2 = int(indices.shape[0] * (arguments.val_split + arguments.test_split))
-        test_indices = indices[0:split_point_1]
-        val_indices = indices[split_point_1:split_point_2]
-        train_indices = indices[split_point_2::]
-
-        # Creates the DataFrames for each of the data splits.
-        train_df = df.take(train_indices)
-        val_df = df.take(val_indices)
-        test_df = df.take(test_indices)
 
     # Loads NHS Tayside dataset.
     elif arguments.dataset == "tayside":
@@ -257,6 +212,59 @@ def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
     else:
         print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\", \"Tayside\" or \"Forth-Vally\"")
         quit()
+
+    # Creates a DataFrame with the filenames and labels.
+    df = DataFrame([filenames, labels]).transpose()
+    df.columns = ["image", "label"]
+
+    # Returns the DataFrame.
+    return df
+
+
+def split_dataframe(df: DataFrame, val_split: float, test_split: float) -> (DataFrame, DataFrame, DataFrame):
+    """
+    Splits a DataFrame into training, validation and testing DataFrames.
+    :param df:
+    :param val_split:
+    :param test_split:
+    :return:
+    """
+
+    # Gets the indices of all the data in the dataset.
+    indices = np.array(range(df.shape[0]))
+
+    # Shuffles the ISIC dataset.
+    random_generator = np.random.default_rng()
+    random_generator.shuffle(indices)
+
+    # Split data indices into training, testing and validation sets.
+    split_point_1 = int(indices.shape[0] * test_split)
+    split_point_2 = int(indices.shape[0] * (val_split + test_split))
+    test_indices = indices[0:split_point_1]
+    val_indices = indices[split_point_1:split_point_2]
+    train_indices = indices[split_point_2::]
+
+    # Creates the DataFrames for each of the data splits.
+    train_df = df.take(train_indices)
+    val_df = df.take(val_indices)
+    test_df = df.take(test_indices)
+
+    # Returns the training, validation and testing DataFrames.
+    return train_df, val_df, test_df
+
+
+def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
+    """
+    Loads the selected dataset and creates Dataset object for training, validation and testing.
+    :param arguments: ArgumentParser Namespace containing arguments for data loading.
+    :return: Three Dataset objects for training, validation and testing.
+    """
+
+    # Gets the DataFrame of image names and labels of the selected dataset.
+    df = get_dataframe(arguments)
+
+    # Splits the DataFrame into training, validation and testing DataFrames.
+    train_df, val_df, test_df = split_dataframe(df, arguments.val_split, arguments.test_split)
 
     # Creates the training, validation and testing Dataset objects.
     train_data = Dataset(arguments, "train", train_df)

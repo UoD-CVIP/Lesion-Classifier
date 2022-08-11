@@ -201,9 +201,6 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 
     # Loads NHS Tayside dataset.
     elif arguments.dataset == "tayside":
-        # Gets the directory of the SD260 images.
-        data_base = os.path.join(arguments.dataset_dir, "data")
-
         # Defines the folders and labels for each folder.
         filenames, labels = [], []
         folders = [["X40", 0], ["X41", 0], ["X31x", 1], ["X20", 2], ["B52", 3],
@@ -211,15 +208,12 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 
         # Loops through the folders and gets all the filenames.
         for i in range(len(folders)):
-            files = glob.glob(os.path.join(data_base, folders[i][0], "*.JPG"))
+            files = glob.glob(os.path.join(arguments.dataset_dir, folders[i][0], "*.JPG"))
             filenames += files
             labels += [folders[i][1] for _ in range(len(files))]
 
     # Loads the NHS Forth Valley dataset.
     elif arguments.dataset == "forth-valley":
-        # Gets the directory of the SD260 images.
-        data_base = os.path.join(arguments.dataset_dir, "data")
-
         # Defines the folders and labels for each folder.
         filenames, labels = [], []
         folders = [["X40", 0], ["X41", 0], ["X3", 1], ["X20", 2], ["B52", 3],
@@ -227,13 +221,13 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 
         # Loops through the folders and gets all the filenames.
         for i in range(len(folders)):
-            files = glob.glob(os.path.join(data_base, folders[i][0], "*.JPG"))
+            files = glob.glob(os.path.join(arguments.dataset_dir, folders[i][0], "*.JPG"))
             filenames += files
             labels += [folders[i][1] for _ in range(len(files))]
 
     # Exits script if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\", \"Tayside\" or \"Forth-Vally\"")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\", \"Tayside\" or \"Forth-Valley\"")
         quit()
 
     # Creates a DataFrame with the filenames and labels.

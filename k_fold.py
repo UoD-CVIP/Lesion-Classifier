@@ -17,6 +17,7 @@ import pandas as pd
 from sklearn.model_selection import KFold
 
 # Own Modules
+from utils import log
 from train import train_cnn
 from test import test_cnn, test_bnn
 from dataset import get_dataframe, Dataset
@@ -44,14 +45,17 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
     dataframe = get_dataframe(arguments)
 
     # Splits the filenames and labels from the dataframe.
-    filenames = dataframe["image"].tolist()
-    labels = dataframe["label"].tolist()
+    filenames = dataframe["image"].to_numpy()
+    labels = dataframe["label"].to_numpy()
 
     # Creates a KFold iterator.
     k_fold = KFold(n_splits=arguments.k_folds, shuffle=True, random_state=arguments.seed)
 
     # Loops through the K folds.
-    for train_indices, test_indices in k_fold.split(filenames):
+    for i, train_indices, test_indices in enumerate(k_fold.split(filenames)):
+        # Displays the current cross validation fold.
+        log(arguments, f"----- Fold {i}\n")
+
         # Gets the training and testing filenames for the k fold.
         train_filenames, test_filenames = filenames[train_indices], filenames[test_indices]
         train_labels, test_labels = labels[train_indices], labels[test_indices]

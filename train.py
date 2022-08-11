@@ -162,7 +162,7 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
             # Adds the number of batches, losses and accuracy to the epoch sum.
             num_batches += 1
             epoch_loss += loss.item()
-            epoch_acc += batch_accuracy
+            epoch_acc += batch_accuracy.item()
 
             # Logs the details of the epoch progress.
             if num_batches % arguments.log_interval == 0:

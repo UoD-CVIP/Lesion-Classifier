@@ -48,7 +48,8 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
 
     # Loads the testing data is no test data has been provided.
     if test_data is None:
-        _, _, test_data = get_datasets(arguments)
+        data = get_datasets(arguments)
+        test_data = data if len(data) == 1 else data[2]
 
     # Creates the testing data loader using the dataset objects.
     testing_data_loader = DataLoader(test_data, batch_size=arguments.batch_size * 2,

@@ -10,6 +10,7 @@ The file contains the code used for handling a selected dataset used to train an
 
 # Built-in/Generic Imports
 import os
+import glob
 from argparse import Namespace
 
 # Library Imports
@@ -203,10 +204,32 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
         # Gets the directory of the SD260 images.
         data_base = os.path.join(arguments.dataset_dir, "data")
 
+        # Defines the folders and labels for each folder.
+        filenames, labels = [], []
+        folders = [["X40", 0], ["X41", 0], ["X31x", 1], ["X20", 2], ["B52", 3],
+                  ["X01", 4], ["X9002", 5], ["X11", 6], ["X12", 6]]
+
+        # Loops through the folders and gets all the filenames.
+        for i in range(len(folders)):
+            files = glob.glob(os.path.join(data_base, folders[i][0], "*.JPG"))
+            filenames += files
+            labels += [folders[i][1] for _ in range(len(files))]
+
     # Loads the NHS Forth Valley dataset.
     elif arguments.dataset == "forth-valley":
         # Gets the directory of the SD260 images.
         data_base = os.path.join(arguments.dataset_dir, "data")
+
+        # Defines the folders and labels for each folder.
+        filenames, labels = [], []
+        folders = [["X40", 0], ["X41", 0], ["X3", 1], ["X20", 2], ["B52", 3],
+                  ["X01", 4], ["X9002", 5], ["X11", 6], ["X12", 6]]
+
+        # Loops through the folders and gets all the filenames.
+        for i in range(len(folders)):
+            files = glob.glob(os.path.join(data_base, folders[i][0], "*.JPG"))
+            filenames += files
+            labels += [folders[i][1] for _ in range(len(files))]
 
     # Exits script if a valid dataset has not been selected.
     else:
@@ -224,16 +247,16 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 def split_dataframe(df: DataFrame, val_split: float, test_split: float) -> (DataFrame, DataFrame, DataFrame):
     """
     Splits a DataFrame into training, validation and testing DataFrames.
-    :param df:
-    :param val_split:
-    :param test_split:
-    :return:
+    :param df: Dataframe to be split.
+    :param val_split: The percentage of data to be used for validation.
+    :param test_split: The percentage of data to be used for testing.
+    :return: Three DataFrames for training, validation and testing.
     """
 
     # Gets the indices of all the data in the dataset.
     indices = np.array(range(df.shape[0]))
 
-    # Shuffles the ISIC dataset.
+    # Shuffles the dataset.
     random_generator = np.random.default_rng()
     random_generator.shuffle(indices)
 
@@ -253,15 +276,19 @@ def split_dataframe(df: DataFrame, val_split: float, test_split: float) -> (Data
     return train_df, val_df, test_df
 
 
-def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset):
+def get_datasets(arguments: Namespace) -> (Dataset, Dataset, Dataset) or Dataset:
     """
     Loads the selected dataset and creates Dataset object for training, validation and testing.
     :param arguments: ArgumentParser Namespace containing arguments for data loading.
-    :return: Three Dataset objects for training, validation and testing.
+    :return: Three Dataset objects for training, validation and testing or single testing Dataset.
     """
 
     # Gets the DataFrame of image names and labels of the selected dataset.
     df = get_dataframe(arguments)
+
+    # If getting Tayside or Forth Valley dataset return all data as test data.
+    if arguments.dataset.lower() in ["tayside", "forth-valley"]:
+        return Dataset(arguments, "test", df)
 
     # Splits the DataFrame into training, validation and testing DataFrames.
     train_df, val_df, test_df = split_dataframe(df, arguments.val_split, arguments.test_split)

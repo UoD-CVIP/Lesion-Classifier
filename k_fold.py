@@ -52,11 +52,12 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
     k_fold = KFold(n_splits=arguments.k_folds, shuffle=True, random_state=arguments.seed)
 
     # Loops through the K folds.
-    for i, train_indices, test_indices in enumerate(k_fold.split(filenames)):
+    for i, indices in enumerate(k_fold.split(filenames)):
         # Displays the current cross validation fold.
         log(arguments, f"----- Fold {i}\n")
 
         # Gets the training and testing filenames for the k fold.
+        train_indices, test_indices = indices
         train_filenames, test_filenames = filenames[train_indices], filenames[test_indices]
         train_labels, test_labels = labels[train_indices], labels[test_indices]
 

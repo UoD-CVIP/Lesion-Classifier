@@ -66,7 +66,7 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
         train_data.columns = ["image", "label"]
 
         # Creates a DataFrame with the testing filenames and labels.
-        test_data = pd.DataFrame([test_labels, test_labels]).transpose()
+        test_data = pd.DataFrame([test_filenames, test_labels]).transpose()
         test_data.columns = ["image", "label"]
 
         # Gets the indices of all the data in the dataset.

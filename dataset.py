@@ -4,6 +4,8 @@
 """
 The file contains the code used for handling a selected dataset used to train and test the model.
     Dataset - Class for handling the dynamic loading and augmentation of data.
+    get_dataframe - Function to get a dataframe of a specified datasets.
+    split_dataframe - Function to split a dataframe into training, validation and testing.
     get_datasets - Function to load the training, validation and testing datasets.
 """
 
@@ -203,12 +205,11 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
     elif arguments.dataset == "tayside":
         # Defines the folders and labels for each folder.
         filenames, labels = [], []
-        folders = [["X40", 0], ["X41", 0], ["X31x", 1], ["X20", 2], ["B52", 3],
-                  ["X01", 4], ["X9002", 5], ["X11", 6], ["X12", 6]]
+        folders = [["MEL", 0], ["NV", 1], ["BCC", 2], ["AK", 3], ["BKL", 4], ["DF", 5], ["SCC", 6]]
 
         # Loops through the folders and gets all the filenames.
         for i in range(len(folders)):
-            files = glob.glob(os.path.join(arguments.dataset_dir, folders[i][0], "*.JPG"))
+            files = glob.glob(os.path.join(arguments.dataset_dir, folders[i][0], "*", "*.JPG"))
             filenames += files
             labels += [folders[i][1] for _ in range(len(files))]
 

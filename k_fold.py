@@ -93,8 +93,15 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
         # Trains the CNN model using the training and validation data fold.
         train_cnn(arguments, device, load_model, train_data, val_data)
 
+        # Temporally sets the load model to the newly trained model.
+        temp_load_model = arguments.load_model
+        arguments.load_model = arguments.experiment
+
         # Tests the CNN model using the testing data fold.
         test_cnn(arguments, device, test_data)
 
         # Tests the BNN model using the testing data fold.
         test_bnn(arguments, device, train_data, test_data)
+
+        # Sets the original load model.
+        arguments.load_model = temp_load_model

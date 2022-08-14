@@ -78,7 +78,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
     classifier.to(device)
 
     # Defines the arrays of predictions, labels and the batch count.
-    predictions, labels, batch_count = np.array([]), np.array([]), 0
+    prediction_list, label_list, batch_count = [], [], 0
 
     # Loops through the testing data batches with no gradient calculations.
     with torch.no_grad():
@@ -88,7 +88,7 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
 
             # Moves the images to the selected device also appends the labels to the array of labels.
             images = images.to(device)
-            labels = np.append(labels, [labels.cpu().numpy()])
+            label_list += list(labels.cpu().numpy())
 
             # Performs forward propagation using 16 bit precision.
             if arguments.precision == 16 and device != torch.device("cpu"):
@@ -100,11 +100,15 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
                 logits = classifier(images)
 
             # Gets the predictive probabilities and appends them to the array of predictions.
-            predictions = np.append(predictions, [F.softmax(logits, dim=1).cpu().numpy()])
+            prediction_list += list(F.softmax(logits, dim=1).cpu().numpy())
 
             # If the number of batches have been reached end testing.
             if batch_count == arguments.batches_per_epoch:
                 break
+
+    # Converts the lists of arrays to NumPy Arrays.
+    predictions = np.array(prediction_list)
+    labels = np.array(label_list)
 
     # Gets the labels from the predicted labels from the predictions.
     predictions = np.argmax(predictions, axis=1)
@@ -187,7 +191,7 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
         la.optimize_prior_precision(method="marglik")
 
     # Defines the arrays of predictions, labels and the batch count.
-    predictions, labels, batch_count = np.array([]), np.array([]), 0
+    prediction_list, label_list, batch_count = [], [], 0
 
     # Loops through the testing data batches with no gradient calculations.
     with torch.no_grad():
@@ -197,7 +201,7 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
 
             # Moves the images to the selected device also appends the labels to the array of labels.
             images = images.to(device)
-            labels = np.append(labels, labels.cpu().numpy())
+            label_list += list(labels.cpu().numpy())
 
             # Gets the predictive samples from the Laplace model.
             predictive_outputs = la.predictive_samples(images, n_samples=arguments.testing_samples)
@@ -210,11 +214,14 @@ def test_bnn(arguments: Namespace, device: torch.device, train_data: Dataset = N
             predictive_outputs = np.mean(predictive_outputs, axis=1)
 
             # Gets the predictive probabilities and appends them to the array of predictions.
-            predictions = np.append(predictions, predictive_outputs)
+            prediction_list += list(predictive_outputs)
 
             # If the number of batches have been reached end testing.
             if batch_count == arguments.batches_per_epoch:
                 break
+
+    predictions = np.array(prediction_list)
+    labels = np.array(label_list)
 
     # Gets the labels from the predicted labels from the predictions.
     predictions = np.argmax(predictions, axis=1)

@@ -4,7 +4,6 @@
 """
 The file contains implementations of the functions used to test a CNN model.
     test_cnn - Function used to test a Convolutional Neural Network.
-    test_bnn - Function used to test a Bayesian Convolutional Neural Network.
 """
 
 
@@ -15,7 +14,6 @@ from argparse import Namespace
 # Library Imports
 import timm
 import torch
-import laplace
 import numpy as np
 from pycm import *
 from torch.cuda import amp

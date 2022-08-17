@@ -19,7 +19,7 @@ from sklearn.model_selection import KFold
 # Own Modules
 from utils import log
 from train import train_cnn
-from test import test_cnn, test_bnn
+from test import test_cnn
 from dataset import get_dataframe, Dataset
 
 

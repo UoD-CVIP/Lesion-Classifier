@@ -9,9 +9,9 @@ Can be adjusted using either the configuration file or command line arguments.
 
 
 # Own Modules Imports
+from test import test_cnn
 from train import train_cnn
 from k_fold import k_fold_cross_validation
-from test import test_cnn, test_bnn
 from utils import log, set_random_seed, get_device
 from config import load_configurations, print_arguments
 

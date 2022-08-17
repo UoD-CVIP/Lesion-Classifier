@@ -8,7 +8,7 @@ python3 main.py --experiment isic --task test --dataset forth-valley --dataset_d
 
 # SD260 Model
 python3 main.py --experiment sd260 --task train --dataset sd260 --dataset_dir ../../Datasets/SD260;
-python3 main.py --experiment sd260 --task test --dataset isic --dataset_dir ../../Datasets/SD260 --load_model sd260;
+python3 main.py --experiment sd260 --task test --dataset isic --dataset_dir ../../Datasets/ISIC_2019 --load_model sd260;
 python3 main.py --experiment sd260 --task test --dataset sd260 --dataset_dir ../../Datasets/SD260 --load_model sd260;
 python3 main.py --experiment sd260 --task test --dataset tayside --dataset_dir ../../Datasets/Dermatology/Tayside --load_model sd260;
 python3 main.py --experiment sd260 --task test --dataset forth-valley --dataset_dir ../../Datasets/Dermatology/Forth_Valley_Macro --load_model sd260;
@@ -59,7 +59,7 @@ python3 main.py --experiment isic_swin --task test --dataset forth-valley --data
 
 # SD260 Model
 python3 main.py --experiment sd260_swin --task train --dataset sd260 --dataset_dir ../../Datasets/SD260 --swin_model True;
-python3 main.py --experiment sd260_swin --task test --dataset isic --dataset_dir ../../Datasets/SD260 --load_model sd260_swin --swin_model True;
+python3 main.py --experiment sd260_swin --task test --dataset isic --dataset_dir ../../Datasets/ISIC_2019 --load_model sd260_swin --swin_model True;
 python3 main.py --experiment sd260_swin --task test --dataset sd260 --dataset_dir ../../Datasets/SD260 --load_model sd260_swin --swin_model True;
 python3 main.py --experiment sd260_swin --task test --dataset tayside --dataset_dir ../../Datasets/Dermatology/Tayside --load_model sd260_swin --swin_model True;
 python3 main.py --experiment sd260_swin --task test --dataset forth-valley --dataset_dir ../../Datasets/Dermatology/Forth_Valley_Macro --load_model sd260_swin --swin_model True;

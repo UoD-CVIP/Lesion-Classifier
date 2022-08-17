@@ -54,7 +54,6 @@ if __name__ == "__main__":
     # Tests a CNN model.
     elif arguments.task.lower() == "test":
         test_cnn(arguments, device)
-        test_bnn(arguments, device)
 
     # Trains a CNN model using k fold validation.
     elif arguments.task.lower() == "train_cv":
@@ -62,7 +61,7 @@ if __name__ == "__main__":
 
     # Fine-tunes a CNN model using k fold validation.
     elif arguments.task.lower() == "tune_cv":
-        k_fold_cross_validation(arguments, device, tune=True)
+        k_fold_cross_validation(arguments, device, load_model=True)
 
     else:
         log(arguments, "Enter a valid task. \"train\", \"finetune\", \"test\", \"train_cv\" or \"tune_cv\"")

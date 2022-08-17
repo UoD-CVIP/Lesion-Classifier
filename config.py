@@ -137,11 +137,6 @@ def load_configurations(description: str) -> Namespace:
                                  default=int(config_parser["training"]["k_folds"]),
                                  help="Integer - The number of k folds used for cross validation.")
 
-    # Bayesian Arguments
-    argument_parser.add_argument("--testing_samples", type=int,
-                                 default=int(config_parser["bayesian"]["testing_samples"]),
-                                 help="Integer - The number of samples taken during testing.")
-
     # Debug Arguments
     argument_parser.add_argument("--detect_anomaly", type=str_to_bool,
                                  default=config_parser["debug"]["detect_anomaly"].lower() == "true",

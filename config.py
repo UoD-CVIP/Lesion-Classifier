@@ -94,6 +94,12 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--test_split", type=float,
                                  default=float(config_parser["dataset"]["test_split"]),
                                  help="Float - Percentage of data to be used for testing.")
+    argument_parser.add_argument("--additional_dataset", type=str,
+                                 default=config_parser["dataset"]["additional_dataset"].lower(),
+                                 help="String - Additional Dataset to be used for testing.")
+    argument_parser.add_argument("--additional_dataset_dir", type=str,
+                                 default=config_parser["dataset"]["additional_dataset_dir"],
+                                 help="String - Directory path for where the additional dataset files are stored.")
 
     # Performance Arguments
     argument_parser.add_argument("--data_workers", type=int,

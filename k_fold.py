@@ -20,7 +20,7 @@ from sklearn.model_selection import KFold
 from utils import log
 from train import train_cnn
 from test import test_cnn
-from dataset import get_dataframe, Dataset
+from dataset import get_datasets, get_dataframe, Dataset
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -47,6 +47,19 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
     # Splits the filenames and labels from the dataframe.
     filenames = dataframe["image"].to_numpy()
     labels = dataframe["label"].to_numpy()
+
+    # Edits the arguments to the additional arguments.
+    tmp_dataset, tmp_dataset_dir = arguments.dataset, arguments.dataset_dir
+    arguments.dataset = arguments.additional_dataset
+    arguments.dataset_dir = arguments.additional_dataset_dir
+
+    # Gets the Dataset object for the additional dataset.
+    data = get_datasets(arguments)
+    additional_dataset = data if type(data) == Dataset else data[2]
+
+    # Resets the arguments.
+    arguments.dataset = tmp_dataset
+    arguments.dataset_dir = tmp_dataset_dir
 
     # Creates a KFold iterator.
     k_fold = KFold(n_splits=arguments.k_folds, shuffle=True, random_state=arguments.seed)
@@ -99,6 +112,10 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
 
         # Tests the CNN model using the testing data fold.
         test_cnn(arguments, device, test_data)
+
+        log(arguments, f"\nAdditional dataset Testing - {arguments.additional_dataset}")
+        # Tests the CNN model using the additional dataset.
+        test_cnn(arguments, device, additional_dataset)
 
         # Sets the original load model.
         arguments.load_model = temp_load_model

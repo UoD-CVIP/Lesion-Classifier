@@ -3,7 +3,6 @@
 
 """
 The file contains implementations of the functions used to find the temperature parameter for a trained model.
-    temperature_nll - Calculates the negative log likelihood for a validation set using a provided temperature.
     optimise_temperature - Finds the temperature for a provided model using
     find_temperature - Loads the validation data and a trained model and finds the temperature parameter.
 """
@@ -16,9 +15,9 @@ from argparse import Namespace
 # Library Imports
 import timm
 import torch
-import numpy as np
-from scipy import optimize
 from torch.cuda import amp
+from torch.optim import LBFGS
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 # Own Modules
@@ -37,27 +36,6 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def temperature_nll(temperature, *args) -> float:
-    """
-    Calculates the negative log likelihood for the given temperature parameter.
-    :param temperature: Floating point value for the temperature.
-    :param args: Tuple containing logits and labels.
-    :return: Floating point value for the negative log likelihood.
-    """
-
-    # Gets the logits and labels from the arguments.
-    logits, labels = args
-
-    # divides the logits by the temperature parameter.
-    labels = logits / temperature
-
-    # Gets the softmax predictive probabilities from the logits.
-    predictions = np.clip(np.exp(logits) / np.sum(np.exp(logits), 1)[:, None], 1e-20, 1. - 1e-20)
-
-    # Returns the negative log likelihood from the softmax predictions and labels.
-    return -np.sum(labels * np.log(predictions)) / predictions.shape[0]
-
-
 def optimise_temperature(arguments: Namespace, classifier: torch.nn.Module, data_loader: DataLoader,
                          device: torch.device) -> float:
     """
@@ -68,6 +46,10 @@ def optimise_temperature(arguments: Namespace, classifier: torch.nn.Module, data
     :param device: PyTorch device that will be used for training.
     :return: Floating point value for the output temperature score.
     """
+
+    # Creates the temperature parameter and optimiser for the parameter.
+    temperature = torch.nn.Parameter(torch.ones(1, device=device))
+    temp_optimiser = LBFGS([temperature], lr=0.01, max_iter=1000, line_search_fn="strong_wolfe")
 
     # Defines the logit and label lists.
     logit_list, label_list = [], []
@@ -94,15 +76,24 @@ def optimise_temperature(arguments: Namespace, classifier: torch.nn.Module, data
             label_list.append(labels)
 
     # Moves the logits and labels from the gpu to the cpu.
-    logits = torch.cat(logit_list).cpu().numpy()
-    labels = torch.cat(label_list).cpu().numpy()
+    logit_list = torch.cat(logit_list)
+    label_list = torch.cat(label_list)
 
-    # Optimises the temperature parameter using L-BFGS-B.
-    temperature = optimize.minimize(temperature_nll, 1.0, args=(logits, labels), method="L-BFGS-B",
-                                    bounds=((0.05, 5.0),), tol=1e-12).x[0]
+    def _eval() -> torch.Tensor:
+        """
+        Evaluation function for the temperature scaling optimiser.
+        :return: PyTorch Tensor for temperature scaling loss.
+        """
+
+        temp_loss = F.cross_entropy(torch.div(logit_list, temperature), label_list)
+        temp_loss.backward()
+        return temp_loss.item()
+
+    # Performs a step using the temperature scaling optimiser.
+    temp_optimiser.step(_eval)
 
     # Returns the temperature value.
-    return temperature
+    return temperature.item()
 
 
 def find_temperature(arguments: Namespace, device: torch.device) -> None:

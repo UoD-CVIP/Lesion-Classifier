@@ -38,7 +38,7 @@ __status__    = "Development"
 
 
 def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False,
-              train_data: Dataset = None, val_data: Dataset = None) -> None:
+              train_data: Dataset = None, val_data: Dataset = None) -> float:
     """
     Function for training the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
@@ -250,3 +250,5 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     log(arguments,
         f"\nTraining Finished with best loss of {round(best_loss, 4)} at epoch {best_epoch} in "
         f"{int(time.time() - start_time)}s.")
+
+    return temperature

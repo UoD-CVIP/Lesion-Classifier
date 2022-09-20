@@ -97,6 +97,9 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
             else:
                 logits = classifier(images)
 
+            # Temperature parameter is applied to the logits.
+            logits = torch.div(logits, arguments.temperature)
+
             # Gets the predictive probabilities and appends them to the array of predictions.
             prediction_list += list(F.softmax(logits, dim=1).cpu().numpy())
 

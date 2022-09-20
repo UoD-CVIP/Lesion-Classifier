@@ -125,6 +125,9 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--swin_model", type=str_to_bool,
                                  default=config_parser["model"]["swin_model"].lower() == "true",
                                  help="Boolean - Should the SWIN model be used instead of EfficientNet.")
+    argument_parser.add_argument("--temperature", type=float,
+                                 default=float(config_parser["model"]["temperature"]),
+                                 help="Float - Temperature parameter used for temperature scaling.")
 
     # Training Arguments
     argument_parser.add_argument("--epochs", type=int,

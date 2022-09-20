@@ -2,8 +2,10 @@
 
 
 """
-The file contains implementations of the functions used to test a CNN model.
-    test_cnn - Function used to test a Convolutional Neural Network.
+The file contains implementations of the functions used to find the temperature parameter for a trained model.
+    temperature_nll - Calculates the negative log likelihood for a validation set using a provided temperature.
+    optimise_temperature - Finds the temperature for a provided model using
+    find_temperature - Loads the validation data and a trained model and finds the temperature parameter.
 """
 
 
@@ -15,16 +17,14 @@ from argparse import Namespace
 import timm
 import torch
 import numpy as np
-from pycm import *
 from scipy import optimize
 from torch.cuda import amp
-from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
 # Own Modules
 from utils import log
 from model import Classifier
-from dataset import get_datasets, Dataset
+from dataset import get_datasets
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -37,7 +37,7 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def temperature_optimisation(temperature, *args) -> float:
+def temperature_nll(temperature, *args) -> float:
     """
     Calculates the negative log likelihood for the given temperature parameter.
     :param temperature: Floating point value for the temperature.
@@ -58,7 +58,8 @@ def temperature_optimisation(temperature, *args) -> float:
     return -np.sum(labels * np.log(predictions)) / predictions.shape[0]
 
 
-def get_temperature(arguments: Namespace, classifier: torch.nn.Module, data_loader: DataLoader, device: torch.device, ) -> None:
+def optimise_temperature(arguments: Namespace, classifier: torch.nn.Module, data_loader: DataLoader,
+                         device: torch.device) -> float:
     """
     Finds an optimal temperature parameter that minimises negative log likelihood on a given validation set.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
@@ -97,9 +98,52 @@ def get_temperature(arguments: Namespace, classifier: torch.nn.Module, data_load
     labels = torch.cat(label_list).cpu().numpy()
 
     # Optimises the temperature parameter using L-BFGS-B.
-    temperature = optimize.minimize(temperature_optimisation, 1.0, args=(logits, labels),
-                                    method="L-BFGS-B", bounds=((0.05, 5.0),), tol=1e-12).x[0]
+    temperature = optimize.minimize(temperature_nll, 1.0, args=(logits, labels), method="L-BFGS-B",
+                                    bounds=((0.05, 5.0),), tol=1e-12).x[0]
 
     # Returns the temperature value.
     return temperature
 
+
+def find_temperature(arguments: Namespace, device: torch.device) -> None:
+    """
+    Loads the validation data and a trained model and finds the temperature parameter.
+    :param arguments: ArgumentParser Namespace object with arguments used for training.
+    :param device: PyTorch device that will be used for training.
+    """
+
+    # Loads the validation data.
+    _, val_data, _ = get_datasets(arguments)
+
+    # Creates the validation data loader using the dataset object
+    validation_data_loader = DataLoader(val_data, batch_size=arguments.batch_size * 2,
+                                        shuffle=False, num_workers=arguments.data_workers,
+                                        pin_memory=False, drop_last=False)
+
+    log(arguments, "Loaded Dataset\n")
+
+    # Initialises the classifier model.
+    if arguments.swin_model:
+        # Loads the SWIN Transformer model.
+        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=True,
+                                       num_classes=val_data.num_classes)
+
+    else:
+        # Loads the EfficientNet CNN model.
+        classifier = Classifier(arguments.efficient_net, val_data.num_classes)
+
+    # Loads a trained model.
+    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt")))
+
+    # Sets the classifier to training mode.
+    classifier.eval()
+
+    # Moves the classifier to the selected device.
+    classifier.to(device)
+
+    log(arguments, "Loaded Model\n")
+
+    # Finds the temperature parameter.
+    temperature = optimise_temperature(arguments, classifier, validation_data_loader, device)
+
+    log(arguments, f"Temperature = {temperature}")

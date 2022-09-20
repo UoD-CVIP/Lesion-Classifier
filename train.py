@@ -24,6 +24,7 @@ from torch.optim import SGD, lr_scheduler
 from utils import log
 from model import Classifier
 from dataset import get_datasets, Dataset
+from calibration import optimise_temperature
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -236,6 +237,14 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
 
             # Saves the model to the save directory.
             torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt"))
+
+    # Loads the best trained model.
+    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt")))
+
+    # Finds the temperature parameter on the validation set.
+    temperature = optimise_temperature(arguments, classifier, validation_data_loader, device)
+
+    log(arguments, f"\nTemperature = {temperature}")
 
     # Logs the final training information.
     log(arguments,

@@ -73,7 +73,10 @@ def load_configurations(description: str) -> Namespace:
                                  help="String - Directory path for where log files are stored.")
     argument_parser.add_argument("--log_interval", type=int,
                                  default=int(config_parser["logging"]["log_interval"]),
-                                 help="Integer - .")
+                                 help="Integer - The number of batches before outputting a training update..")
+    argument_parser.add_argument("--output_dir", type=str,
+                                 default=config_parser["logging"]["output_dir"],
+                                 help="String - Directory path for where the output files are stored.")
 
     # Dataset Arguments
     argument_parser.add_argument("--dataset", type=str,

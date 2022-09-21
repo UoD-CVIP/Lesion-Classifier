@@ -37,8 +37,8 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False,
-              train_data: Dataset = None, val_data: Dataset = None) -> float:
+def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = False,train_data: Dataset = None,
+              val_data: Dataset = None, fold: int = None) -> float:
     """
     Function for training the Convolutional Neural Network.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
@@ -46,6 +46,7 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     :param load_model: Boolean if another trained model should be loaded for fine-tuning.
     :param train_data: Dataset object to be used to train the model.
     :param val_data: Dataset object to be used to validation the model.
+    :param fold: Integer for the current k_fold if using cross validation.
     """
 
     # Sets PyTorch to detect errors in Autograd, useful for debugging but slows down performance.
@@ -236,7 +237,8 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
             os.makedirs(arguments.model_dir, exist_ok=True)
 
             # Saves the model to the save directory.
-            torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt"))
+            model_name = f"{arguments.experiment}_{'' if fold is None else str(fold)+'_'}best.pt"
+            torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, model_name))
 
     # Loads the best trained model.
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt")))

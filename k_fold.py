@@ -114,8 +114,14 @@ def k_fold_cross_validation(arguments: Namespace, device: torch.device, load_mod
         test_cnn(arguments, device, test_data, i)
 
         log(arguments, f"\nAdditional dataset Testing - {arguments.additional_dataset}")
+
+        # Temporally sets the dataset to the additional dataset.
+        tmp_dataset = arguments.dataset
+        arguments.dataset = arguments.additional_dataset
+
         # Tests the CNN model using the additional dataset.
         test_cnn(arguments, device, additional_dataset, i)
 
-        # Sets the original load model.
+        # Sets the original load model and dataset.
         arguments.load_model = temp_load_model
+        arguments.dataset = tmp_dataset

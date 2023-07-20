@@ -9,6 +9,7 @@ The file contains implementations of the functions used to test a CNN model.
 
 # Built-in/Generic Imports
 import os
+import time
 from argparse import Namespace
 
 # Library Imports
@@ -23,8 +24,8 @@ from torch.utils.data import DataLoader
 
 # Own Modules
 from utils import log
-from model import Classifier
 from dataset import get_datasets, Dataset
+from model import CNNClassifier, SWINClassifier
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -46,6 +47,8 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
     :param fold: Integer for the current k_fold if using cross validation.
     """
 
+    big_time = time.time()
+
     # Loads the testing data is no test data has been provided.
     if test_data is None:
         data = get_datasets(arguments)
@@ -61,12 +64,11 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=False,
-                                       num_classes=test_data.num_classes)
+        classifier = SWINClassifier(test_data.num_classes)
 
     else:
         # Loads the EfficientNet CNN model.
-        classifier = Classifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
+        classifier = CNNClassifier(arguments.efficient_net, test_data.num_classes, pretrained=False)
 
     # Loads the trained model.
     model_name = f"{arguments.experiment}_{'' if fold is None else str(fold) + '_'}best.pt"
@@ -118,6 +120,8 @@ def test_cnn(arguments: Namespace, device: torch.device, test_data: Dataset = No
             # If the number of batches have been reached end testing.
             if batch_count == arguments.batches_per_epoch:
                 break
+
+    print(f"{time.time() - big_time}s")
 
     # Creates the output directory for the output files.
     os.makedirs(arguments.output_dir, exist_ok=True)

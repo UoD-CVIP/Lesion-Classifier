@@ -22,8 +22,8 @@ from torch.utils.data import DataLoader
 
 # Own Modules
 from utils import log
-from model import Classifier
 from dataset import get_datasets
+from model import CNNClassifier, SWINClassifier
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -96,11 +96,12 @@ def optimise_temperature(arguments: Namespace, classifier: torch.nn.Module, data
     return temperature.item()
 
 
-def find_temperature(arguments: Namespace, device: torch.device) -> None:
+def find_temperature(arguments: Namespace, device: torch.device) -> float:
     """
     Loads the validation data and a trained model and finds the temperature parameter.
     :param arguments: ArgumentParser Namespace object with arguments used for training.
     :param device: PyTorch device that will be used for training.
+    :return: Temperature value.
     """
 
     # Loads the validation data.
@@ -116,12 +117,11 @@ def find_temperature(arguments: Namespace, device: torch.device) -> None:
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=True,
-                                       num_classes=val_data.num_classes)
+        classifier = SWINClassifier(val_data.num_classes)
 
     else:
         # Loads the EfficientNet CNN model.
-        classifier = Classifier(arguments.efficient_net, val_data.num_classes)
+        classifier = CNNClassifier(arguments.efficient_net, val_data.num_classes)
 
     # Loads a trained model.
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt")))
@@ -138,3 +138,21 @@ def find_temperature(arguments: Namespace, device: torch.device) -> None:
     temperature = optimise_temperature(arguments, classifier, validation_data_loader, device)
 
     log(arguments, f"Temperature = {temperature}")
+
+    return temperature
+
+
+def rewrite_config(arguments: Namespace, temperature: float) -> None:
+    """
+    Adds the new temperature value to the config file.
+    :param arguments: ArgumentParser Namespace object with arguments used for calibration.
+    :param temperature: Floating point value for the new temperature value to rewrite.
+    """
+
+    with open(arguments.config_file, 'r', encoding="utf-8") as file:
+        lines = file.readlines()
+
+    lines[31] = f"temperature            = {temperature}\n"
+
+    with open(arguments.config_file, 'w', encoding="utf-8") as file:
+        file.writelines(lines)

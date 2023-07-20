@@ -187,7 +187,7 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 
         # Gets the full filenames and labels of the ISIC data.
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
-        labels = np.argmax(df.drop(["image", "VASC", "UNK"], 1).to_numpy(), axis=1)
+        labels = np.argmax(df.drop(columns=["image", "VASC", "UNK"], axis=1).to_numpy(), axis=1)
 
     # Loads SD260 dataset.
     elif arguments.dataset.lower() == "sd260":
@@ -199,7 +199,7 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
 
         # Gets the full filenames and labels of the SD260 data.
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
-        labels = np.argmax(df.drop(["image", "UNK"], 1).to_numpy(), axis=1)
+        labels = np.argmax(df.drop(columns=["image", "UNK"], axis=1).to_numpy(), axis=1)
 
     # Loads NHS Tayside dataset.
     elif arguments.dataset == "tayside":

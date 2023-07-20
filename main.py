@@ -11,10 +11,10 @@ Can be adjusted using either the configuration file or command line arguments.
 # Own Modules Imports
 from test import test_cnn
 from train import train_cnn
-from calibration import find_temperature
 from k_fold import k_fold_cross_validation
 from utils import log, set_random_seed, get_device
 from config import load_configurations, print_arguments
+from calibration import find_temperature, rewrite_config
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -66,7 +66,9 @@ if __name__ == "__main__":
 
     # Finds the temperature used for temperature scaling.
     elif arguments.task.lower() == "temperature":
-        find_temperature(arguments, device)
+        temperature = find_temperature(arguments, device)
+        print(temperature)
+        rewrite_config(arguments, temperature)
 
     else:
         log(arguments, "Enter a valid task. \"train\", \"finetune\", \"test\", \"train_cv\" or \"tune_cv\"")

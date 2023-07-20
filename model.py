@@ -8,6 +8,7 @@ The file for the definition of classifier model.
 
 
 # Library Imports
+import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -24,7 +25,7 @@ __email__     = ["j.carse@dundee.ac.uk", "t.suveges@dundee.ac.uk"]
 __status__    = "Development"
 
 
-class Classifier(nn.Module):
+class CNNClassifier(nn.Module):
     """
     Class for the Classifier model that uses an EfficientNet encoder.
         init - Initialiser for the model.
@@ -40,7 +41,7 @@ class Classifier(nn.Module):
         """
 
         # Calls the super for the nn.Module.
-        super(Classifier, self).__init__()
+        super(CNNClassifier, self).__init__()
 
         # Loads the EfficientNet encoder.
         if pretrained:
@@ -71,6 +72,51 @@ class Classifier(nn.Module):
 
         # Performs forward propagation with the hidden layer.
         x = F.silu(self.hidden(x))
+
+        # Gets the output logits from the output layer.
+        return self.classifier(x)
+
+
+class SWINClassifier(nn.Module):
+    """
+    Class for the Classifier model that uses an SWIN encoder.
+        init - Initialiser for the model.
+        forward - Performs forward propagation.
+    """
+
+    def __init__(self, class_num: int = 2, pretrained: bool = True) -> None:
+        """
+        Initialiser for the model that initialises the model's layers.
+        :param class_num: The number of classes the model will be predicting.
+        :param pretrained: If the pretrained weights should be loaded.
+        """
+
+        # Calls the super for the nn.Module.
+        super(SWINClassifier, self).__init__()
+
+        # Loads the SWIN transformer encoder.
+        self.encoder = timm.create_model("swin_base_patch4_window7_224_in22k",
+                                         pretrained=pretrained, num_classes=class_num)
+
+        # Defines the hidden Fully Connected Layer.
+        self.hidden = nn.Linear(1024, 512)
+
+        # Defines the output Fully Connected Layer.
+        self.classifier = nn.Linear(512, class_num)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Performs forward propagation with the Classifier.
+        :param x: Input image batch.
+        :return: PyTorch Tensor of logits.
+        """
+
+        # Performs forward propagation with the encoder.
+        x = self.encoder.forward_features(x)
+        x = x.mean(dim=1)
+
+        # Performs forward propagation with the hidden layer.
+        x = F.gelu(self.hidden(x))
 
         # Gets the output logits from the output layer.
         return self.classifier(x)

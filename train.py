@@ -22,9 +22,9 @@ from torch.optim import SGD, lr_scheduler
 
 # Own Modules
 from utils import log
-from model import Classifier
 from dataset import get_datasets, Dataset
 from calibration import optimise_temperature
+from model import CNNClassifier, SWINClassifier
 
 
 __author__    = ["Jacob Carse", "Tamás Süveges"]
@@ -69,15 +69,13 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
 
     log(arguments, "Loaded Datasets\n")
 
-    # Initialises the classifier model.
+        # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = timm.create_model("swin_base_patch4_window7_224_in22k", pretrained=True,
-                                       num_classes=train_data.num_classes)
-
+        classifier = SWINClassifier(train_data.num_classes)
     else:
         # Loads the EfficientNet CNN model.
-        classifier = Classifier(arguments.efficient_net, train_data.num_classes)
+        classifier = CNNClassifier(arguments.efficient_net, train_data.num_classes)
 
     # Loads a pretrained model if specified.
     if load_model:
@@ -93,7 +91,8 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
     optimiser = SGD(params=classifier.parameters(), lr=arguments.minimum_lr)
 
     # Initialises the learning rate scheduler to adjust the learning rate during training.
-    scheduler = lr_scheduler.CyclicLR(optimiser, arguments.minimum_lr, arguments.maximum_lr, mode="triangular2")
+    step_size = (len(training_data_loader) // arguments.batch_size) * 2
+    scheduler = lr_scheduler.CyclicLR(optimiser, base_lr=arguments.minimum_lr, max_lr=arguments.maximum_lr, step_size_up=step_size, mode="triangular")
 
     if arguments.precision == 16 and device != torch.device("cpu"):
         scaler = amp.GradScaler()
@@ -155,9 +154,6 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
                 # Updates the parameters of the model using the optimiser.
                 optimiser.step()
 
-            # Updates the learning rate scheduler.
-            scheduler.step()
-
             # Calculates the accuracy of the batch.
             batch_accuracy = (predictions.max(dim=1)[1] == labels).sum().double() / labels.shape[0]
 
@@ -165,6 +161,9 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
             num_batches += 1
             epoch_loss += loss.item()
             epoch_acc += batch_accuracy.item()
+
+            # Updates the learning rate scheduler.
+            scheduler.step()
 
             # Logs the details of the epoch progress.
             if num_batches % arguments.log_interval == 0:
@@ -241,16 +240,13 @@ def train_cnn(arguments: Namespace, device: torch.device, load_model: bool = Fal
             torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, model_name))
 
     # Loads the best trained model.
-    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_best.pt")))
-
-    # Finds the temperature parameter on the validation set.
-    temperature = optimise_temperature(arguments, classifier, validation_data_loader, device)
-
-    log(arguments, f"\nTemperature = {temperature}")
+    classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, f"{arguments.experiment}_{'' if fold is None else str(fold)+'_'}best.pt")))
 
     # Logs the final training information.
     log(arguments,
         f"\nTraining Finished with best loss of {round(best_loss, 4)} at epoch {best_epoch} in "
         f"{int(time.time() - start_time)}s.")
-
+        
+    temperature = optimise_temperature(arguments, classifier, validation_data_loader, device)
+    
     return temperature

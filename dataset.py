@@ -235,6 +235,8 @@ def get_dataframe(arguments: Namespace) -> DataFrame:
     df = DataFrame([filenames, labels]).transpose()
     df.columns = ["image", "label"]
 
+    print(df.size)
+
     # Returns the DataFrame.
     return df
 
@@ -256,11 +258,12 @@ def split_dataframe(df: DataFrame, val_split: float, test_split: float) -> (Data
     random_generator.shuffle(indices)
 
     # Split data indices into training, testing and validation sets.
-    split_point_1 = int(indices.shape[0] * test_split)
-    split_point_2 = int(indices.shape[0] * (val_split + test_split))
-    test_indices = indices[0:split_point_1]
-    val_indices = indices[split_point_1:split_point_2]
-    train_indices = indices[split_point_2::]
+    split_point = int(indices.shape[0] * test_split)
+    test_indices = indices[0:split_point]
+    train_indices = indices[split_point::]
+    split_point = int(train_indices.shape[0] * val_split)
+    val_indices = train_indices[0:split_point]
+    train_indices = train_indices[split_point::]
 
     # Creates the DataFrames for each of the data splits.
     train_df = df.take(train_indices)
